@@ -2,8 +2,8 @@ package btree
 
 import (
 	"fmt"
-	consts "sixletters/kv-store/pkg/consts"
-	util "sixletters/kv-store/pkg/util"
+	consts "sixletters/simple-db/pkg/consts"
+	util "sixletters/simple-db/pkg/util"
 )
 
 type Item struct {

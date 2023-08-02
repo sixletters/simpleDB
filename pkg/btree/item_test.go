@@ -1,7 +1,7 @@
 package btree
 
 import (
-	"sixletters/kv-store/pkg/consts"
+	"sixletters/simple-db/pkg/consts"
 	"testing"
 )
 

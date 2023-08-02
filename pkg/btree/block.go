@@ -1,8 +1,8 @@
 package btree
 
 import (
-	"sixletters/kv-store/pkg/consts"
-	"sixletters/kv-store/pkg/util"
+	"sixletters/simple-db/pkg/consts"
+	"sixletters/simple-db/pkg/util"
 )
 
 // Total size is 4096

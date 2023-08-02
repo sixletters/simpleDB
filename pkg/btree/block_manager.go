@@ -3,7 +3,7 @@ package btree
 import (
 	"fmt"
 	"os"
-	"sixletters/kv-store/pkg/consts"
+	"sixletters/simple-db/pkg/consts"
 )
 
 type BlockManager struct {
