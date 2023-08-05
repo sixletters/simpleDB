@@ -87,3 +87,7 @@ func (bm *BlockManager) GetBlockByID(index int64) (*Block, error) {
 	}
 	return NewBlock().FromBytes(byteBuffer), nil
 }
+
+func (bm *BlockManager) GetMaxItemsSize() int {
+	return consts.MaxLeafSize
+}
