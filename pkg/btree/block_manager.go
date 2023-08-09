@@ -91,3 +91,11 @@ func (bm *BlockManager) GetBlockByID(index int64) (*Block, error) {
 func (bm *BlockManager) GetMaxItemsSize() int {
 	return consts.MaxLeafSize
 }
+
+func (bm *BlockManager) GenerateBlockID() (uint64, error) {
+	lastID, err := bm.GetLastID()
+	if err != nil {
+		return 0, err
+	}
+	return uint64(lastID + 1), nil
+}

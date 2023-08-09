@@ -1,7 +1,7 @@
 package consts
 
 const (
-	DefaultMinimumItems    = 128
+	DefaultMinimumItems    = 2
 	DefaultItemMaxKeyLen   = 30
 	DefaultItemMaxValueLen = 94
 	BlockSize              = 4096
