@@ -167,10 +167,13 @@ func (pn *Pnode) AddItem(itemToAdd *Item) int {
 		if itemToAdd.key > item.key {
 			continue
 		}
-		pn.Items = util.InsertAt(pn.Items, itemToAdd, index)
+		if itemToAdd.key == item.key {
+			pn.Items[index] = itemToAdd
+		} else {
+			pn.Items = util.InsertAt(pn.Items, itemToAdd, index)
+		}
 		return index
 	}
-
 	// will only reach here if the key is bigger than all elements in the item list
 	LastIndex := len(pn.Items)
 	pn.Items = util.InsertAt(pn.Items, itemToAdd, LastIndex)
@@ -196,6 +199,34 @@ func (pn *Pnode) SearchCurrentNode(key string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func (pn *Pnode) Update(itemToUpdate Item) error {
+	_, itemExists := pn.Search(itemToUpdate.key)
+	if !itemExists {
+		return fmt.Errorf("key does not exist, cannot be updated")
+	}
+	_, found := pn.SearchCurrentNode(itemToUpdate.key)
+	if found {
+		for index, item := range pn.Items {
+			if item.key == itemToUpdate.key {
+				pn.Items[index] = &itemToUpdate
+				pn.SavetoDisk()
+				return nil
+			}
+		}
+	}
+
+	childIndex, err := pn.FindChildIndexForItem(itemToUpdate.key)
+	if err != nil {
+		return fmt.Errorf("unable to find appropriate index")
+	}
+
+	child, err := pn.GetChildAt(childIndex)
+	if err != nil {
+		return fmt.Errorf("unable to get child at index: %d", childIndex)
+	}
+	return child.Update(itemToUpdate)
 }
 
 func (pn *Pnode) Search(key string) (string, bool) {
@@ -235,28 +266,36 @@ func (pn *Pnode) SplitNode() (*Item, *Pnode, *Pnode, error) {
 	return pn.splitNodeWithChildren()
 }
 
+// This function splits a child at a given index, the middle item is propagated up to the current nodes item
+// and inserted at the appropriated index, once the child is split, the two new nodes are added as children
+// to the current node's children list at the appropriate indexes/
 func (pn *Pnode) SplitChildAt(index int) error {
 	if index >= len(pn.children) {
 		return fmt.Errorf("there is no child at this index")
 	}
 	childBlockID := pn.children[index]
+	// get the child block to be split
 	childBlock, err := pn.Bm.GetBlockByID(int64(childBlockID))
 	if err != nil {
 		return fmt.Errorf("unable to get child Block")
 	}
 
+	// Create pnode based of child node
 	childNode := NewPnode(pn.Bm).FromBlock(childBlock)
+	// get the propagated item, left child and right child of split node
 	item, left, right, err := childNode.SplitNode()
 	if err != nil {
 		return fmt.Errorf("unable to split child node")
 	}
+
+	// insert at appropraite index
 	pn.Items = util.InsertAt(pn.Items, item, index)
 	pn.children[index] = left.BlockID
 	pn.children = util.InsertAt(pn.children, right.BlockID, index+1)
-	pn.SavetoDisk()
-	return nil
+	return pn.SavetoDisk()
 }
 
+// This functions splits a node with children
 func (pn *Pnode) splitNodeWithChildren() (*Item, *Pnode, *Pnode, error) {
 	if pn.IsLeaf() {
 		return nil, nil, nil, fmt.Errorf("unable to split a leaf node as if it had children")
@@ -265,13 +304,18 @@ func (pn *Pnode) splitNodeWithChildren() (*Item, *Pnode, *Pnode, error) {
 	items := pn.GetItems()
 	midIndex := (len(items) / 2) + 1
 	midItem := items[midIndex]
+
+	// set current node items to half of what it was
 	pn.Items = items[0:midIndex]
 	SplitNodeItems := items[midIndex+1:]
 
 	children := pn.GetChildren()
+
+	// set current node children to half of what it was
 	pn.children = children[0 : midIndex+1]
 	SplitNodeChildren := children[midIndex+1:]
 
+	// generate new blockID for new node
 	generatedID, err := pn.Bm.GenerateBlockID()
 	if err != nil {
 		return nil, nil, nil, err
@@ -282,7 +326,10 @@ func (pn *Pnode) splitNodeWithChildren() (*Item, *Pnode, *Pnode, error) {
 		return nil, nil, nil, err
 	}
 
+	// spawn new node with half of current nodes items, children and new block ID
 	SplitNode := NewPnode(pn.Bm).WithItems(SplitNodeItems).WithChildren(SplitNodeChildren).WithID(generatedID)
+
+	// save
 	err = SplitNode.SavetoDisk()
 	if err != nil {
 		return nil, nil, nil, err
@@ -291,6 +338,7 @@ func (pn *Pnode) splitNodeWithChildren() (*Item, *Pnode, *Pnode, error) {
 	return midItem, pn, SplitNode, nil
 }
 
+// This function splits a leaf node
 func (pn *Pnode) splitLeafNode() (*Item, *Pnode, *Pnode, error) {
 	if !pn.IsLeaf() {
 		return nil, nil, nil, fmt.Errorf("unable to split a leaf node that is not a leaf node")
@@ -299,25 +347,33 @@ func (pn *Pnode) splitLeafNode() (*Item, *Pnode, *Pnode, error) {
 	items := pn.GetItems()
 	midIndex := (len(items) / 2) + 1
 	midItem := items[midIndex]
+
+	// set current node items to half of what it was
 	pn.Items = items[0:midIndex]
 	SplitNodeItems := items[midIndex+1:]
 
+	// generate new blockID for new node
 	generatedID, err := pn.Bm.GenerateBlockID()
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
+	//save
 	err = pn.SavetoDisk()
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
+	// spawn new node with half of current nodes items and new block ID
 	SplitNode := NewPnode(pn.Bm).WithItems(SplitNodeItems).WithID(generatedID)
+
+	// save
 	err = SplitNode.SavetoDisk()
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
+	// return item in the middle, current node (left), new node (right)
 	return midItem, pn, SplitNode, nil
 }
 
@@ -337,18 +393,31 @@ func (pn *Pnode) InsertChildAt(index int, child *Pnode) error {
 	return nil
 }
 
+// This function adds an item, left node and right node pair into current Pnode,
 func (pn *Pnode) AddItemAndChildren(item *Item, leftNode *Pnode, rightnode *Pnode) error {
+	// find insertion index of item
 	insertionIndex := pn.AddItem(item)
+	// left node is inserted at insertion index
 	err := pn.SetChildAt(insertionIndex, leftNode)
 	if err != nil {
 		return fmt.Errorf("unable to insert child at %d", insertionIndex)
 	}
 
+	//right node is inserted at insertion index + 1
 	err = pn.InsertChildAt(insertionIndex+1, rightnode)
 	if err != nil {
 		return fmt.Errorf("unable to insert child at %d", insertionIndex+1)
 	}
 	return nil
+}
+
+func (pn *Pnode) IsKeyInNode(key string) bool {
+	for _, item := range pn.Items {
+		if item.key == key {
+			return true
+		}
+	}
+	return false
 }
 
 func (pn *Pnode) InsertNonFull(item *Item) error {
@@ -370,7 +439,8 @@ func (pn *Pnode) InsertNonFull(item *Item) error {
 		return fmt.Errorf("unable to find child node")
 	}
 
-	// Check if child node is 1 below the limit, if it is then split the node
+	// Check if child node is 1 below the limit, if it is then split the node, only if key does not already exists
+	// if key exists the number of items would not increase
 	if ChildNode.GetItemsSize() == consts.DefaultMinimumItems*2-1 {
 		pn.SplitChildAt(childIndex)
 		// If the newly inserted item from the split is smaller than item, then increase insertion index as
