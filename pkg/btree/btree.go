@@ -16,7 +16,17 @@ type BTree struct {
 func NewBTree(file *os.File) *BTree {
 	BlockManager := NewBlockManager(file)
 	tree := &BTree{}
-	tree.Root = NewPnode(BlockManager)
+	if BlockManager.RootBlockExists() {
+		rootBlock, err := BlockManager.GetRootBlock()
+		if err != nil {
+			fmt.Println(err.Error())
+			panic("unable to get root block, file may be corrupted")
+		}
+		tree.Root = NewPnode(BlockManager).FromBlock(rootBlock)
+	} else {
+		tree.Root = NewPnode(BlockManager).WithID(0)
+	}
+	tree.Root.SavetoDisk()
 	tree.minItems = consts.DefaultMinimumItems
 	return tree
 }

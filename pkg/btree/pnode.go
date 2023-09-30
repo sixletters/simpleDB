@@ -48,6 +48,7 @@ func (pn *Pnode) PrintTree() {
 	}
 }
 
+// Function converts a Pnode from a serialized block to a pnode
 func (pn *Pnode) FromBlock(block *Block) *Pnode {
 	pn.BlockID = block.Id
 	// TODO: May need to deep copy in the future.
@@ -56,6 +57,7 @@ func (pn *Pnode) FromBlock(block *Block) *Pnode {
 	return pn
 }
 
+// Function converts a pnode into a serialized block
 func (pn *Pnode) IntoBlock() *Block {
 	block := NewBlock()
 	block.Id = pn.BlockID
@@ -69,6 +71,7 @@ func (pn *Pnode) IsLeaf() bool {
 	return len(pn.children) == 0
 }
 
+// Returns the items in a Pnode
 func (pn *Pnode) GetItems() []*Item {
 	return pn.Items
 }
@@ -108,29 +111,36 @@ func (pn *Pnode) GetChildrenSize() int {
 	return len(pn.children)
 }
 
+// Function returns the child Pnode at a particular index, throws an error if index is invalid
 func (pn *Pnode) GetChildAt(index int) (*Pnode, error) {
 	if index >= len(pn.children) {
 		return nil, fmt.Errorf("index is bigger than the number of children in this node")
 	}
+	// retrieve corresponding block by blockID using block manager
 	block, err := pn.Bm.GetBlockByID(int64(pn.children[index]))
 	if err != nil {
 		return nil, err
 	}
+	//Deserialize to pnode
 	return NewPnode(pn.Bm).FromBlock(block), nil
 }
 
+// Functions returns all child Pnodes of a Pnode
 func (pn *Pnode) GetChildPnodes() ([]*Pnode, error) {
 	childPnodes := make([]*Pnode, len(pn.children))
 	for i, childBlockID := range pn.children {
+		// retrieve corresponding block by blockID using block manager
 		block, err := pn.Bm.GetBlockByID(int64(childBlockID))
 		if err != nil {
 			return nil, err
 		}
+		// deserialize to Pnode
 		childPnodes[i] = NewPnode(pn.Bm).FromBlock(block)
 	}
 	return childPnodes, nil
 }
 
+// Returns an item at a particular index of a Pnode, returns an error if index is invalid/
 func (pn *Pnode) GetItemAt(index int) (*Item, error) {
 	if index >= len(pn.Items) {
 		return nil, fmt.Errorf("index is bigger than the number of items in node")
@@ -151,7 +161,7 @@ func (pn *Pnode) IsOverflown() bool {
 }
 
 // adds an element and returns the index -> adds via a linear search
-// Could be optimized to use binary search next time
+// Todo: Could be optimized to use binary search next time
 func (pn *Pnode) AddItem(itemToAdd *Item) int {
 	for index, item := range pn.Items {
 		if itemToAdd.key > item.key {
