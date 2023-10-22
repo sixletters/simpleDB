@@ -1,7 +1,6 @@
 package btree
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -32,7 +31,6 @@ func Test_block_creation(t *testing.T) {
 		block.setChildren(tt.children)
 		block.setItemList(tt.itemList)
 
-		fmt.Print(block.ChildrenIDs)
 		if !reflect.DeepEqual(block.ChildrenIDs, tt.children) {
 			t.Errorf("Children arrays are not equal")
 		}
@@ -78,7 +76,6 @@ func Test_block_bytes_conversion(t *testing.T) {
 		buffer := block.IntoBytes()
 
 		converted_block := NewBlock().FromBytes(buffer)
-		fmt.Print(block.ChildrenIDs)
 		if !reflect.DeepEqual(converted_block.ChildrenIDs, tt.children) {
 			t.Errorf("Children arrays are not equal")
 		}
