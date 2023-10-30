@@ -30,5 +30,5 @@ func main() {
 	fmt.Println(mytree.Search("e"))
 	// mytree.Insert("f", "dion")
 	// mytree.Insert("h", "dion")
-	mytree.PrintTree()
+	// mytree.PrintTree()
 }
