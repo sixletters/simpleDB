@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sixletters/simple-db/pkg/btree"
+	"sixletters/simple-db/pkg/token"
 )
 
 func main() {
@@ -31,4 +32,11 @@ func main() {
 	// mytree.Insert("f", "dion")
 	// mytree.Insert("h", "dion")
 	// mytree.PrintTree()
+	mytoken, _ := token.GenerateToken("HARRIS")
+	fmt.Print(mytoken)
+	if err := token.Authenticate(mytoken, "HARRIS"); err != nil {
+		fmt.Print(err.Error())
+		panic("TOKEN IS WRONG")
+	}
+	fmt.Printf("SUCCESS")
 }

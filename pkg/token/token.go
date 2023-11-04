@@ -11,13 +11,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GenerateToken(user_id uint) (string, error) {
+func GenerateToken(apiSecret string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["user_id"] = user_id
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(os.Getenv("API_SECRET")))
+	return token.SignedString([]byte(apiSecret))
+}
+
+func Authenticate(tokenString string, apiSecret string) error {
+	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(apiSecret), nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func TokenValid(c *gin.Context) error {
