@@ -1,4 +1,4 @@
-package btree
+package block
 
 import (
 	"fmt"
@@ -29,6 +29,10 @@ func (bm *BlockManager) GetLastID() (int64, error) {
 	// for e.g, if only the root block exists the fileSizeBytes will be equal to one block size
 	// which means the latest one has an ID of 0
 	return (fileSizeBytes / consts.BlockSize) - 1, nil
+}
+
+func (bm *BlockManager) GetBlockFile() *os.File {
+	return bm.file
 }
 
 func (bm *BlockManager) RootBlockExists() bool {

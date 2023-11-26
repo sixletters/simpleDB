@@ -4,30 +4,41 @@ import (
 	"fmt"
 	"os"
 	"sixletters/simple-db/pkg/consts"
+	blockUtil "sixletters/simple-db/pkg/tree/block"
 )
 
 // consts "sixletters/kv-store/pkg/consts"
 
 type BTree struct {
-	Root     *Pnode
-	minItems int
+	Root             *blockUtil.Pnode
+	minItems         int
+	treeBlockManager *blockUtil.BlockManager
 }
 
 func NewBTree(file *os.File) (*BTree, error) {
-	BlockManager := NewBlockManager(file)
-	tree := &BTree{}
+	BlockManager := blockUtil.NewBlockManager(file)
+	btree := &BTree{}
 	if BlockManager.RootBlockExists() {
 		rootBlock, err := BlockManager.GetRootBlock()
 		if err != nil {
 			fmt.Println(err.Error())
 			panic("unable to get root block, file may be corrupted")
 		}
-		tree.Root = NewPnode(BlockManager).FromBlock(rootBlock)
+		btree.Root = blockUtil.NewPnode(BlockManager).FromBlock(rootBlock)
 	} else {
-		tree.Root = NewPnode(BlockManager).WithID(0)
+		btree.Root = blockUtil.NewPnode(BlockManager).WithID(0)
 	}
-	tree.minItems = consts.DefaultMinimumItems
-	return tree, tree.Root.SavetoDisk()
+	btree.treeBlockManager = BlockManager
+	btree.minItems = consts.DefaultMinimumItems
+	return btree, btree.Root.SavetoDisk()
+}
+
+func (bt *BTree) GetBlockManager() *blockUtil.BlockManager {
+	return bt.treeBlockManager
+}
+
+func (bt *BTree) GetBlockFile() *os.File {
+	return bt.treeBlockManager.GetBlockFile()
 }
 
 func (bt *BTree) PrintTree() {
@@ -44,7 +55,7 @@ func (bt *BTree) Search(key string) (string, bool) {
 }
 
 func (bt *BTree) Insert(key string, value string) error {
-	itemToInsert := NewItemWithKV(key, value)
+	itemToInsert := blockUtil.NewItemWithKV(key, value)
 	// if item already exists then just update key
 	// todo: can keep a cache instead
 	// may have issues when reconstructing from file
@@ -59,7 +70,7 @@ func (bt *BTree) Insert(key string, value string) error {
 			return err
 		}
 		// Create a new block to replace root with id 0
-		NewRoot := NewPnode(bt.Root.Bm).WithID(0)
+		NewRoot := blockUtil.NewPnode(bt.Root.Bm).WithID(0)
 
 		// set current root to new ID
 		bt.Root.BlockID = generatedID
