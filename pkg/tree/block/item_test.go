@@ -1,4 +1,4 @@
-package btree
+package block
 
 import (
 	"sixletters/simple-db/pkg/consts"
