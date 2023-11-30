@@ -31,4 +31,23 @@ func main() {
 		fmt.Print(err.Error())
 	}
 	fmt.Print(val)
+
 }
+
+// "fmt"
+// "sixletters/simple-db/pkg/simpleDickbig"
+// "google.golang.org/grpc"
+// func main() {
+//     lis, err := net.Listen("tcp", ":8080")
+//     if err != nil {
+//         log.Fatalf("Failed to listen: %v", err)
+//     }
+
+//     grpcServer := grpc.NewServer()
+//     simpleDickbig.RegisterKeyValueServiceServer(grpcServer, &simpleDickbig.keyValueServer{})
+
+//     log.Println("Server is listening on :8080")
+//     if err := grpcServer.Serve(lis); err != nil {
+//         log.Fatalf("Failed to serve: %v", err)
+//     }
+// }

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package keyvalue;
 
+option go_package = "github.com/sixletters/simpleDB";
+
 message GetRequest {
     string key = 1;
 }
