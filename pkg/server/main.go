@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
-	"errors"
-	"log"
-	"sync"
+	// "errors"
+	// "log"
+	// "sync"
 	"fmt"
 	"sixletters/simple-db/pkg/storage"
 	"sixletters/simple-db/pkg/tree"
