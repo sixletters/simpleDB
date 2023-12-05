@@ -37,7 +37,6 @@ message AppendEntriesResponse {
 }
 
 service RaftNode {
-
     rpc RequestVote(RequestVoteRequest) returns (RequestVoteResponse);
     rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
 }
