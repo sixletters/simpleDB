@@ -1,5 +1,4 @@
 /vendor
-.dion-env/
-/__pycache__
+py-sdk-client/__pycache__
 /dion-env
 
