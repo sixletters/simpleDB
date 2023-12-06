@@ -17,8 +17,8 @@
 
 
 import grpc
-import client_without_internode_pb2
-import client_without_internode_pb2_grpc
+from ..pkg.stubs import client_without_internode_pb2
+from ..pkg.stubs import client_without_internode_pb2_grpc
 
 class Client:
     def __init__(self, server_address):

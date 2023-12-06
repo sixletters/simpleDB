@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"sixletters/simple-db/pkg/storage"
 	"sixletters/simple-db/pkg/tree"
+	"sixletters/simple-db/pkg/stubs"
 )
 
 type grpcServer struct{
 	storageEngine storage.StorageEngine
 }
 
-func NewgrpcServer() *grpcServer {
+func NewGrpcServer() *grpcServer {
 	newStorageConfig := storage.NewConfigWithOpts(
 		storage.WithTreeType(tree.BTree),
 		storage.WithFilePath("testFile.txt"),
@@ -25,20 +26,20 @@ func NewgrpcServer() *grpcServer {
 	}
 }
 
-func (s *grpcServer) Get(ctx context.Context, req *GetRequest) (*GetResponse, error) {
+func (s *grpcServer) Get(ctx context.Context, req *stubs.GetRequest) (*stubs.GetResponse, error) {
 	res, err := s.storageEngine.Get(context.Background(), req.Key)
 	if err != nil {
 		fmt.Print(err.Error())
 		return nil, err
 	}
-	return &GetResponse{Value: res}, nil
+	return &stubs.GetResponse{Value: res}, nil
 }
 
-func (s *grpcServer) Put(ctx context.Context, req *PutRequest) (*PutResponse, error) {
+func (s *grpcServer) Put(ctx context.Context, req *stubs.PutRequest) (*stubs.PutResponse, error) {
 	err := s.storageEngine.Put(context.Background(), req.Key, req.Value)
 	if err != nil {
 		fmt.Print(err.Error())
-		return &PutResponse{Success: false}, err
+		return &stubs.PutResponse{Success: false}, err
 	}
-	return &PutResponse{Success: true}, nil
+	return &stubs.PutResponse{Success: true}, nil
 }

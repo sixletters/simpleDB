@@ -1,4 +1,4 @@
-package server
+package stubs
 
 import (
 	reflect "reflect"
