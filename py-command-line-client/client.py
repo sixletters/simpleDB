@@ -1,11 +1,11 @@
 from enum import Enum
-class Command(Enum):
-    COMMAND_GET = "get"
-    COMMAND_PUT = "put"
-    COMMAND_UPDATE = "update"
-    COMMAND_DELETE = "delete"
+from enum.command import Command
+import KVStoreController
+
 
 class Client():
+    def __init__(self, server_address):
+        self.KVStoreController = KVStoreController(server_address)
 
     def get_data_from_input_array(self, input_array):
         if input_array[1] == Command.COMMAND_GET.value:
@@ -46,51 +46,12 @@ class Client():
                     "key": key,
                     "val": val
                 }
-                resp = KVStoreController.execute_command(command, data)
+                resp = self.KVStoreController.execute_command(command, data)
                 print(resp)
             except ValueError as e:
                 print(f"Invalid Input: {e}")
 
-class KVStoreService():
-    def __init__(self):
-        self.KVStore = {}
 
-    def get_value(self, data):
-        if data["key"] not in self.KVStore:
-            raise ValueError("No such Key Value pair.")
-        return self.KVStore[data["key"]]
-    
-    def insert_value(self, data):
-        if data["key"] in self.KVStore:
-            raise ValueError("Key Value pair already exist")
-        self.KVStore[data["key"]] = data["val"]
-        return self.KVStore
-
-    def update_value(self, data):
-        if data["key"] not in self.KVStore:
-            raise ValueError("Key Value pair does not exist")
-        self.KVStore[data["key"]] = data["val"]
-        return self.KVStore
-
-    def delete_value(self, data):
-        if data["key"] not in self.KVStore:
-            raise ValueError("Key Value pair does not exist")
-        self.KVStore.pop(data["key"])
-        return self.KVStore
-
-class KVStoreController():
-    service = KVStoreService()
-
-    commands = {
-        Command.COMMAND_GET.value: service.get_value,
-        Command.COMMAND_PUT.value:  service.insert_value,
-        Command.COMMAND_UPDATE.value: service.update_value,
-        Command.COMMAND_DELETE.value: service.delete_value,
-    }
-
-    def execute_command(command, data):
-        service_function = KVStoreController.commands[command]
-        return service_function(data)
 
 
 
@@ -99,7 +60,7 @@ class KVStoreController():
 
 
 if __name__ == "__main__":
-    client = Client()
+    client = Client('localhost:8080')
     try:
         print("####### Client has started #######")
         client.run()

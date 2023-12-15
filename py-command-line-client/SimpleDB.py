@@ -2,7 +2,8 @@ import grpc
 from ..pkg.stubs import client_without_internode_pb2
 from ..pkg.stubs import client_without_internode_pb2_grpc
 
-class Client:
+# Simple Db SDK
+class SimpleDB:
     def __init__(self, server_address):
         self.channel = grpc.insecure_channel(server_address)
         self.stub = client_without_internode_pb2_grpc.KeyValueServiceStub(self.channel)
@@ -16,19 +17,3 @@ class Client:
         request = client_without_internode_pb2.GetRequest(key=key)
         response = self.stub.Get(request)
         return response.value
-
-# Usage
-if __name__ == '__main__':
-    server_address = 'localhost:8080'  # Replace with your server's address
-    client = Client(server_address)
-
-    key = 'dion'
-    value = 'test_value'
-
-    # Set a key-value pair on the server
-    response = client.set_key_value(key, value)
-    print(f'Success: Key "{key}" set to value "{value}"')
-
-    # Get a value from the server
-    retrieved_value = client.get_value(key)
-    print(f'Value for key "{key}" is: {retrieved_value}')
