@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sixletters/simple-db/pkg/config"
 	"sixletters/simple-db/pkg/tree"
 	"sync"
 )
@@ -15,22 +16,24 @@ type singletonEngine struct {
 	File     *os.File
 	Tree     tree.Tree
 	TreeLock *sync.RWMutex
-	Config   *StorageEngineConfig
+	Config   *config.StorageEngineConfig
 }
 
 // Constructor for the singleton Engine
-func NewSingletonEngine(config *StorageEngineConfig, opts ...EngineOpt) (StorageEngine, error) {
+func NewSingletonEngine(config *config.StorageEngineConfig, opts ...EngineOpt) (StorageEngine, error) {
 	// logic should and can be abstracted out
 	var engineFile *os.File
-	_, err := os.Stat(config.Filepath)
+	// only retrive directory from user, the naming of the file will be fixed
+	dataFilePath := getDataFilePath(config.DataDir)
+	_, err := os.Stat(dataFilePath)
 	if err != nil {
 		// create file it does not exist yet
-		engineFile, err = os.Create(config.Filepath)
+		engineFile, err = os.Create(dataFilePath)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		engineFile, err = os.OpenFile(config.Filepath, os.O_RDWR, os.ModeAppend)
+		engineFile, err = os.OpenFile(dataFilePath, os.O_RDWR, os.ModeAppend)
 		if err != nil {
 			return nil, err
 		}

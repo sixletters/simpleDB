@@ -1,0 +1,15 @@
+.PHONY: test
+test:
+	go test ./... -v -coverpkg=./...
+
+.PHONY: report
+report:
+	go tool cover -html=coverage.out -o coverage.html
+
+.PHONY: build
+build:
+	./build/build.sh
+
+.PHONY: run
+run:
+	./output/bin/cmd

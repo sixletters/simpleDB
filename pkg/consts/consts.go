@@ -7,4 +7,5 @@ const (
 	BlockSize              = 4096
 	ItemSize               = 128
 	MaxLeafSize            = 30
+	DataFileName           = "simpledb.data"
 )
