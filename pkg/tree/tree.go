@@ -12,7 +12,7 @@ type TreeOptions func(Tree)
 // This is an interface that is used to implement any form of storage tree
 // data structure
 type Tree interface {
-	GetBlockManager() *block.BlockManager
+	GetBlockManager() block.BlockManager
 	GetBlockFile() *os.File
 	PrintTree()
 	Search(key string) (string, bool)
