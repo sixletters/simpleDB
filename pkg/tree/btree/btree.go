@@ -12,28 +12,28 @@ import (
 type BTree struct {
 	Root             *blockUtil.Pnode
 	minItems         int
-	treeBlockManager *blockUtil.BlockManager
+	treeBlockManager blockUtil.BlockManager
 }
 
 func NewBTree(file *os.File) (*BTree, error) {
-	BlockManager := blockUtil.NewBlockManager(file)
+	bManager := blockUtil.NewBlockManager(file)
 	btree := &BTree{}
-	if BlockManager.RootBlockExists() {
-		rootBlock, err := BlockManager.GetRootBlock()
+	if bManager.RootBlockExists() {
+		rootBlock, err := bManager.GetRootBlock()
 		if err != nil {
 			fmt.Println(err.Error())
 			panic("unable to get root block, file may be corrupted")
 		}
-		btree.Root = blockUtil.NewPnode(BlockManager).FromBlock(rootBlock)
+		btree.Root = blockUtil.NewPnode(bManager).FromBlock(rootBlock)
 	} else {
-		btree.Root = blockUtil.NewPnode(BlockManager).WithID(0)
+		btree.Root = blockUtil.NewPnode(bManager).WithID(0)
 	}
-	btree.treeBlockManager = BlockManager
+	btree.treeBlockManager = bManager
 	btree.minItems = consts.DefaultMinimumItems
-	return btree, btree.Root.SavetoDisk()
+	return btree, btree.Root.Commit()
 }
 
-func (bt *BTree) GetBlockManager() *blockUtil.BlockManager {
+func (bt *BTree) GetBlockManager() blockUtil.BlockManager {
 	return bt.treeBlockManager
 }
 
@@ -76,10 +76,10 @@ func (bt *BTree) Insert(key string, value string) error {
 		bt.Root.BlockID = generatedID
 
 		//todo : can we save to disk at the end?
-		if err = NewRoot.SavetoDisk(); err != nil {
+		if err = NewRoot.Commit(); err != nil {
 			return err
 		}
-		if err = bt.Root.SavetoDisk(); err != nil {
+		if err = bt.Root.Commit(); err != nil {
 			return err
 		}
 

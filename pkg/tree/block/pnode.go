@@ -16,10 +16,10 @@ type Pnode struct {
 	Items    []*Item
 	children []uint64
 	BlockID  uint64
-	Bm       *BlockManager
+	Bm       BlockManager
 }
 
-func NewPnode(bm *BlockManager) *Pnode {
+func NewPnode(bm BlockManager) *Pnode {
 	pnode := &Pnode{}
 	pnode.Items = make([]*Item, 0)
 	pnode.children = make([]uint64, 0)
@@ -211,7 +211,7 @@ func (pn *Pnode) Update(itemToUpdate Item) error {
 		for index, item := range pn.Items {
 			if item.key == itemToUpdate.key {
 				pn.Items[index] = &itemToUpdate
-				pn.SavetoDisk()
+				pn.Commit()
 				return nil
 			}
 		}
@@ -254,9 +254,9 @@ func (pn *Pnode) GetValue(key string) (string, bool) {
 	return pn.Search(key)
 }
 
-func (pn *Pnode) SavetoDisk() error {
+func (pn *Pnode) Commit() error {
 	block := pn.IntoBlock()
-	return pn.Bm.WriteBlockToDisk(block)
+	return pn.Bm.WriteBlock(block)
 }
 
 func (pn *Pnode) SplitNode() (*Item, *Pnode, *Pnode, error) {
@@ -292,7 +292,7 @@ func (pn *Pnode) SplitChildAt(index int) error {
 	pn.Items = util.InsertAt(pn.Items, item, index)
 	pn.children[index] = left.BlockID
 	pn.children = util.InsertAt(pn.children, right.BlockID, index+1)
-	return pn.SavetoDisk()
+	return pn.Commit()
 }
 
 // This functions splits a node with children
@@ -321,7 +321,7 @@ func (pn *Pnode) splitNodeWithChildren() (*Item, *Pnode, *Pnode, error) {
 		return nil, nil, nil, err
 	}
 
-	err = pn.SavetoDisk()
+	err = pn.Commit()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -330,7 +330,7 @@ func (pn *Pnode) splitNodeWithChildren() (*Item, *Pnode, *Pnode, error) {
 	SplitNode := NewPnode(pn.Bm).WithItems(SplitNodeItems).WithChildren(SplitNodeChildren).WithID(generatedID)
 
 	// save
-	err = SplitNode.SavetoDisk()
+	err = SplitNode.Commit()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -359,7 +359,7 @@ func (pn *Pnode) splitLeafNode() (*Item, *Pnode, *Pnode, error) {
 	}
 
 	//save
-	err = pn.SavetoDisk()
+	err = pn.Commit()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -368,7 +368,7 @@ func (pn *Pnode) splitLeafNode() (*Item, *Pnode, *Pnode, error) {
 	SplitNode := NewPnode(pn.Bm).WithItems(SplitNodeItems).WithID(generatedID)
 
 	// save
-	err = SplitNode.SavetoDisk()
+	err = SplitNode.Commit()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -424,7 +424,7 @@ func (pn *Pnode) InsertNonFull(item *Item) error {
 	// If leaf add item, save to disk and done.
 	if pn.IsLeaf() {
 		pn.AddItem(item)
-		return pn.SavetoDisk()
+		return pn.Commit()
 	}
 	// Not leaf node
 
