@@ -16,7 +16,7 @@ type BTree struct {
 }
 
 func NewBTree(file *os.File) (*BTree, error) {
-	bManager := blockUtil.NewBlockManager(file)
+	bManager := blockUtil.NewNaiveBlockManager(file)
 	btree := &BTree{}
 	if bManager.RootBlockExists() {
 		rootBlock, err := bManager.GetRootBlock()

@@ -27,15 +27,18 @@ type BlockManager interface {
 	GenerateBlockID() (uint64, error)
 }
 
-type blockManager struct {
+// This implementation of the block manager is a naive manager that, write directly to disk
+// we wil introduce the mmapBlockManager that handles writes to a memory region that is
+// mmap-ed to a file
+type naiveBlockManager struct {
 	file *os.File
 }
 
-func NewBlockManager(file *os.File) BlockManager {
-	return &blockManager{file: file}
+func NewNaiveBlockManager(file *os.File) BlockManager {
+	return &naiveBlockManager{file: file}
 }
 
-func (bm *blockManager) GetLastID() (int64, error) {
+func (bm *naiveBlockManager) GetLastID() (int64, error) {
 	fileData, err := bm.file.Stat()
 	if err != nil {
 		return -1, err
@@ -52,11 +55,11 @@ func (bm *blockManager) GetLastID() (int64, error) {
 	return (fileSizeBytes / consts.BlockSize) - 1, nil
 }
 
-func (bm *blockManager) GetBlockFile() *os.File {
+func (bm *naiveBlockManager) GetBlockFile() *os.File {
 	return bm.file
 }
 
-func (bm *blockManager) RootBlockExists() bool {
+func (bm *naiveBlockManager) RootBlockExists() bool {
 	lastID, err := bm.GetLastID()
 	if err != nil {
 		// if last ID cannot be retrieved means, root block definitely does not exist
@@ -70,7 +73,7 @@ func (bm *blockManager) RootBlockExists() bool {
 	return true
 }
 
-func (bm *blockManager) AddBlock() (*Block, error) {
+func (bm *naiveBlockManager) AddBlock() (*Block, error) {
 	latestID, err := bm.GetLastID()
 	block := &Block{}
 	if err != nil {
@@ -85,21 +88,21 @@ func (bm *blockManager) AddBlock() (*Block, error) {
 	return block, nil
 }
 
-func (bm *blockManager) WriteBlock(block *Block) error {
+func (bm *naiveBlockManager) WriteBlock(block *Block) error {
 	buffer := block.IntoBytes()
 	offset := consts.BlockSize * block.Id
 	_, err := bm.file.WriteAt(buffer, int64(offset))
 	return err
 }
 
-func (bm *blockManager) GetRootBlock() (*Block, error) {
+func (bm *naiveBlockManager) GetRootBlock() (*Block, error) {
 	if bm.RootBlockExists() {
 		return bm.GetBlockByID(0)
 	}
 	return bm.AddBlock()
 }
 
-func (bm *blockManager) GetBlockByID(index int64) (*Block, error) {
+func (bm *naiveBlockManager) GetBlockByID(index int64) (*Block, error) {
 	if index < 0 {
 		return nil, fmt.Errorf("index is less than 0: %d", index)
 	}
@@ -113,14 +116,19 @@ func (bm *blockManager) GetBlockByID(index int64) (*Block, error) {
 	return NewBlock().FromBytes(byteBuffer), nil
 }
 
-func (bm *blockManager) GetMaxItemsSize() int {
+func (bm *naiveBlockManager) GetMaxItemsSize() int {
 	return consts.MaxLeafSize
 }
 
-func (bm *blockManager) GenerateBlockID() (uint64, error) {
+func (bm *naiveBlockManager) GenerateBlockID() (uint64, error) {
 	lastID, err := bm.GetLastID()
 	if err != nil {
 		return 0, err
 	}
 	return uint64(lastID + 1), nil
+}
+
+// todo: implement this
+type mmapBlockManager struct {
+	file *os.File
 }
