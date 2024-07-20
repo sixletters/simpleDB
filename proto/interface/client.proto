@@ -1,4 +1,6 @@
 syntax = "proto3";
+option go_package = "sixletters/simple-db/proto";
+package kv_store;
 
 message KeyValue {
     string key = 1;
@@ -13,17 +15,7 @@ message Value {
     string value = 1;
 }
 
-message ClusterMeta {
-    int32 numServersUp = 1;
-    int32 serversIP = 2;
-    bool isLeader = 3;
-    bool isFollower = 4;
-}
-
-message Empty {}
-
-service ClientNode {
+service SimpleDB {
     rpc Get(Key) returns (Value);
     rpc Put(KeyValue) returns (KeyValue);
-    rpc GetClusterMeta(Empty) returns (ClusterMeta);
 }
