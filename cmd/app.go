@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"sixletters/simple-db/pkg/config"
+	grpcserver "sixletters/simple-db/pkg/grpc_server"
 	httpserver "sixletters/simple-db/pkg/http_server"
 	"sixletters/simple-db/pkg/storage"
 	"sixletters/simple-db/pkg/tree"
@@ -10,11 +12,13 @@ import (
 
 var host string
 var port string
+var grpcPort string
 var treeType string
 var dataDir string
 
 func init() {
 	flag.StringVar(&port, "port", "8080", "port to listen on")
+	flag.StringVar(&grpcPort, "grpc-port", "9090", "port to listen on")
 	flag.StringVar(&host, "host", "", "host to listen on")
 	// other trees not supported yet
 	// flag.StringVar(&treeType, "tree-type", "", "The type of tree used for the storage engine")
@@ -38,10 +42,16 @@ func main() {
 		Port: port,
 	}
 	httpServer := httpserver.NewHttpServer(&serverConfig)
-	if err := httpServer.Run(); err != nil {
+	go func() {
+		defer recover()
+		if err := httpServer.Run(); err != nil {
+			panic(err)
+		}
+	}()
+	grpcServer := grpcserver.NewGrpcServer("", grpcPort)
+	if err := grpcServer.Run(context.Background()); err != nil {
 		panic(err)
 	}
-
 }
 
 // package main
